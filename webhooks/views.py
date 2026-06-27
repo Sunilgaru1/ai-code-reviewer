@@ -36,5 +36,4 @@ def github_webhook(request):
             print(f"Commit  : {commit.get('id')[:7]}")
 
     print("=" * 50)
-
     return JsonResponse({"status": "received"})
