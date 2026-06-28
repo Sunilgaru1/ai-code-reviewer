@@ -1,3 +1,4 @@
+from .tasks import test_task
 import json
 
 from django.http import JsonResponse
@@ -36,4 +37,5 @@ def github_webhook(request):
             print(f"Commit  : {commit.get('id')[:7]}")
 
     print("=" * 50)
+    test_task.delay()
     return JsonResponse({"status": "received"})
