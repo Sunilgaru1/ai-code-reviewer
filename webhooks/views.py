@@ -1,41 +1,62 @@
-from .tasks import test_task
 import json
-
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
+from .models import Repository, Commit, FileChange
+
 
 @csrf_exempt
 def github_webhook(request):
     if request.method != "POST":
         return JsonResponse({"error": "Only POST allowed"}, status=405)
 
-    try:
-        payload = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    payload = json.loads(request.body)
 
-    event_type = request.headers.get("X-GitHub-Event", "unknown")
+    repo_data = payload.get("repository", {})
+    commits = payload.get("commits", [])
 
-    print("=" * 50)
-    print(f"Received GitHub event: {event_type}")
+    # 1. Save or get repository
+    repo, _ = Repository.objects.get_or_create(
+        full_name=repo_data.get("full_name"),
+        defaults={
+            "name": repo_data.get("name"),
+            "url": repo_data.get("html_url"),
+        }
+    )
 
-    repository = payload.get("repository", {})
-    print(f"Repository: {repository.get('full_name')}")
+    # 2. Process commits
+    for c in commits:
+        commit_obj, created = Commit.objects.get_or_create(
+            commit_id=c.get("id"),
+            defaults={
+                "repo": repo,
+                "message": c.get("message", ""),
+                "author": (c.get("author") or {}).get("name", "unknown"),
+                "timestamp": c.get("timestamp"),
+            }
+        )
 
-    if event_type == "push":
-        pusher = payload.get("pusher", {})
-        commits = payload.get("commits", [])
+        # 3. Process files in commit
+        for f in c.get("added", []):
+            FileChange.objects.create(
+                commit=commit_obj,
+                filename=f,
+                status="added"
+            )
 
-        print(f"Pusher: {pusher.get('name')}")
-        print(f"Branch: {payload.get('ref')}")
-        print(f"Commits: {len(commits)}")
+        for f in c.get("modified", []):
+            FileChange.objects.create(
+                commit=commit_obj,
+                filename=f,
+                status="modified"
+            )
 
-        for commit in commits:
-            print("-" * 30)
-            print(f"Message : {commit.get('message')}")
-            print(f"Author  : {commit.get('author', {}).get('name')}")
-            print(f"Commit  : {commit.get('id')[:7]}")
+        for f in c.get("removed", []):
+            FileChange.objects.create(
+                commit=commit_obj,
+                filename=f,
+                status="removed"
+            )
 
-    print("=" * 50)
-    test_task.delay()
-    return JsonResponse({"status": "received"})
+    return JsonResponse({"status": "stored"})
+

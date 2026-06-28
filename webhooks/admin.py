@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Repository, Commit, FileChange
 
-# Register your models here.
+admin.site.register(Repository)
+admin.site.register(Commit)
+admin.site.register(FileChange)
