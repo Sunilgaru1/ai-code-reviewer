@@ -18,7 +18,7 @@ def generate_jwt():
         logger.error("Could not find github_private_key.pem!")
         return None
 
-    # This payload tells GitHub who we are and when this ID card expires (10 minutes)
+    # This payload tells GitHub who we are and when this ID card expires(10 minutes)
     payload = {
         'iat': int(time.time()),
         'exp': int(time.time()) + (10 * 60),
@@ -55,7 +55,8 @@ def get_installation_access_token(installation_id):
         return None
     
 
-import base64 
+
+import base64
 
 def get_file_content(repo_full_name, filename, commit_sha, access_token):
     """
