@@ -48,7 +48,7 @@ def get_installation_access_token(installation_id):
     response = requests.post(url, headers=headers)
 
     if response.status_code == 201:
-        # Success! We got the wristband.
+        # Success!! We got the wristband.
         return response.json().get("token")
     else:
         logger.error(f"Failed to get access token: {response.text}")
