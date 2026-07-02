@@ -1,3 +1,4 @@
+import os
 import time
 import jwt
 import requests
@@ -10,25 +11,25 @@ def generate_jwt():
     """
     Step 1: Creates the temporary 'ID Card' using our Private Key.
     """
-    # Open and read the .pem file you downloaded
+    # 1. We build the exact GPS path to the file using Django's BASE_DIR
+    key_path = settings.BASE_DIR / 'github_private_key.pem'
+    
     try:
-        with open('github_private_key.pem', 'r') as key_file:
+        # 2. We use the exact path to open it
+        with open(key_path, 'r') as key_file:
             private_key = key_file.read()
     except FileNotFoundError:
-        logger.error("Could not find github_private_key.pem!")
+        logger.error(f"Could not find private key at exactly: {key_path}")
         return None
 
-    # This payload tells GitHub who we are and when this ID card expires(10 minutes)
     payload = {
         'iat': int(time.time()),
         'exp': int(time.time()) + (10 * 60),
         'iss': settings.GITHUB_APP_ID
     }
 
-    # We sign it using RS256 (The cryptographic math GitHub requires)
     encoded_jwt = jwt.encode(payload, private_key, algorithm='RS256')
     return encoded_jwt
-
 
 def get_installation_access_token(installation_id):
     """
