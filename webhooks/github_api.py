@@ -11,7 +11,7 @@ def generate_jwt():
     """
     Step 1: Creates the temporary 'ID Card' using our Private Key.
     """
-    # 1. We build the exact GPS path to the file using Django's BASE_DIR
+    # We build the exact GPS path to the file using Django's BASE_DIR
     key_path = settings.BASE_DIR / 'github_private_key.pem'
     
     try:
