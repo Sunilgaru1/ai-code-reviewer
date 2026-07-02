@@ -2,7 +2,7 @@ import logging
 from celery import shared_task
 from django.db import transaction
 from .models import Repository, WebhookEvent, Commit, FileChange
-from .github_api import get_installation_access_token, get_file_content # NEW IMPORTS
+from .github_api import get_installation_access_token, get_file_content
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ def process_github_webhook(self, event_type, payload):
         logger.info(f"Ignored event type: {event_type}")
         return f"Ignored event type: {event_type}"
 
-    # 1. Check if this webhook came from a GitHub App installation
+    # Check if this webhook came from a GitHub App installation
     installation_id = payload.get('installation', {}).get('id')
     if not installation_id:
         return "No installation ID found. Is the GitHub App installed correctly?"
@@ -63,15 +63,13 @@ def process_github_webhook(self, event_type, payload):
 
                     for f in c.get("removed", []):
                         files_to_save_at_once.append(FileChange(commit=commit_obj, filename=f, status="removed"))
-                        # We don't download removed files because they don't exist anymore!
+                        # We don't download removed files because they don't exist anymore
             
             if files_to_save_at_once:
                 FileChange.objects.bulk_create(files_to_save_at_once)
                 logger.info(f"Bulk created {len(files_to_save_at_once)} file changes.")
 
-        # ==========================================
         # OUTSIDE THE BUBBLE (Slow internet stuff)
-        # ==========================================
         
         # If there are files to download, let's get our VIP Wristband
         if files_to_download:
@@ -82,7 +80,7 @@ def process_github_webhook(self, event_type, payload):
                 for filename, commit_sha in files_to_download:
                     code = get_file_content(repo.full_name, filename, commit_sha, access_token)
                     if code:
-                        # For right now, we will just print the first 100 characters to the Celery log to prove it works!
+                        # For right now, we will just print the first 100 characters to the Celery log to prove it works
                         logger.info(f"SUCCESS: Read {filename} -> {code[:100]}...")
             else:
                 logger.error("Failed to acquire Access Token. Cannot download code.")
