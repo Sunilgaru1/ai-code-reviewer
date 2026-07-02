@@ -126,17 +126,22 @@ def process_github_webhook(self, event_type, payload):
 
                     # Analyze only Python files
                     if filename.endswith(".py"):
-
                         metrics = analyze_python_code(code)
-
-                        logger.info(
-                            f"AST Metrics for {filename}: {metrics}"
+                        logger.info(f"AST Metrics for {filename}: {metrics}")
+                        
+                        # NEW: Save the metrics permanently to the Database
+                        FileChange.objects.filter(
+                            commit__commit_id=commit_sha, 
+                            filename=filename
+                        ).update(
+                            functions_count=metrics.get('functions', 0),
+                            classes_count=metrics.get('classes', 0),
+                            loops_count=metrics.get('loops', 0),
+                            complexity_score=metrics.get('complexity', 1)
                         )
-
+                    
                     else:
-                        logger.info(
-                            f"Skipped AST analysis for non-Python file: {filename}"
-                        )
+                        logger.info(f"Skipped AST analysis for non-Python file: {filename}")
 
         success_msg = (
             f"Successfully processed {len(commits_data)} commits for {repo.name}"

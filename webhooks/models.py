@@ -46,6 +46,13 @@ class FileChange(models.Model):
     commit = models.ForeignKey(Commit, on_delete=models.CASCADE, related_name='files')
     filename = models.CharField(max_length=500)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    
+    # AI Metrics Storage
+    functions_count = models.IntegerField(default=0)
+    classes_count = models.IntegerField(default=0)
+    loops_count = models.IntegerField(default=0)
+    # We will use this one in calculating Cyclomatic Complexity!
+    complexity_score = models.IntegerField(default=0) 
 
     def __str__(self):
         return f"{self.filename} ({self.status})"
