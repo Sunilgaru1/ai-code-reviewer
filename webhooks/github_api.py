@@ -15,7 +15,7 @@ def generate_jwt():
     key_path = settings.BASE_DIR / 'github_private_key.pem'
     
     try:
-        # 2. We use the exact path to open it
+        # We use the exact path to open it
         with open(key_path, 'r') as key_file:
             private_key = key_file.read()
     except FileNotFoundError:
