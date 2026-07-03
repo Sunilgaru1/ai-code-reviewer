@@ -51,8 +51,8 @@ class FileChange(models.Model):
     functions_count = models.IntegerField(default=0)
     classes_count = models.IntegerField(default=0)
     loops_count = models.IntegerField(default=0)
-    # We will use this one in calculating Cyclomatic Complexity!
-    complexity_score = models.IntegerField(default=0) 
+    complexity_score = models.IntegerField(default=0)
+    maintainability_score = models.FloatField(null=True, blank=True) 
 
     def __str__(self):
         return f"{self.filename} ({self.status})"

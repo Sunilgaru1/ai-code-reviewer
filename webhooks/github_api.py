@@ -4,6 +4,7 @@ import jwt
 import requests
 from django.conf import settings
 import logging
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +57,6 @@ def get_installation_access_token(installation_id):
         return None
     
 
-
-import base64
 
 def get_file_content(repo_full_name, filename, commit_sha, access_token):
     """

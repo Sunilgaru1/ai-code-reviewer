@@ -6,6 +6,7 @@ from django.db import transaction
 from .models import Repository, WebhookEvent, Commit, FileChange
 from .github_api import get_installation_access_token, get_file_content
 from .analyzer import analyze_python_code
+from ml_engine.services import get_maintainability_score
 
 logger = logging.getLogger(__name__)
 
@@ -125,19 +126,31 @@ def process_github_webhook(self, event_type, payload):
                     logger.info(f"SUCCESS: Read {filename}")
 
                     # Analyze only Python files
+                    # The Brain (AST Parsing + ML Prediction)
                     if filename.endswith(".py"):
                         metrics = analyze_python_code(code)
-                        logger.info(f"AST Metrics for {filename}: {metrics}")
                         
-                        # NEW: Save the metrics permanently to the Database
+                        # Grab the AST numbers
+                        func_count = metrics.get('functions', 0)
+                        class_count = metrics.get('classes', 0)
+                        loop_count = metrics.get('loops', 0)
+                        comp_score = metrics.get('complexity', 1)
+                        
+                        # Ask the ML Engine for a grade
+                        ai_score = get_maintainability_score(func_count, class_count, loop_count, comp_score)
+                        
+                        logger.info(f"AST Metrics: {metrics} | AI Maintainability Score: {ai_score}/100")
+                        
+                        # Save everything permanently to the Database
                         FileChange.objects.filter(
                             commit__commit_id=commit_sha, 
                             filename=filename
                         ).update(
-                            functions_count=metrics.get('functions', 0),
-                            classes_count=metrics.get('classes', 0),
-                            loops_count=metrics.get('loops', 0),
-                            complexity_score=metrics.get('complexity', 1)
+                            functions_count=func_count,
+                            classes_count=class_count,
+                            loops_count=loop_count,
+                            complexity_score=comp_score,
+                            maintainability_score=ai_score
                         )
                     
                     else:
