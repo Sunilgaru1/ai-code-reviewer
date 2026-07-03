@@ -25,7 +25,7 @@ def generate_jwt():
 
     payload = {
         'iat': int(time.time()),
-        'exp': int(time.time()) + (10 * 60),
+        'exp': int(time.time()) + (5* 60),
         'iss': settings.GITHUB_APP_ID
     }
 
@@ -83,3 +83,27 @@ def get_file_content(repo_full_name, filename, commit_sha, access_token):
     else:
         logger.error(f"Failed to fetch {filename}: {response.text}")
         return None
+    
+def post_github_comment(repo_full_name, commit_sha, access_token, comment_body):
+    """
+    Step 4: Uses the VIP Wristband to post our AI review directly as a comment on the GitHub commit.
+    """
+    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){repo_full_name}/commits/{commit_sha}/comments"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    payload = {
+        "body": comment_body
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 201:
+        logger.info(f"Successfully posted AI Review to GitHub commit: {commit_sha}")
+        return True
+    else:
+        logger.error(f"Failed to post comment to GitHub: {response.text}")
+        return False

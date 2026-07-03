@@ -8,6 +8,9 @@ from .github_api import get_installation_access_token, get_file_content
 from .analyzer import analyze_python_code
 from ml_engine.services import get_maintainability_score
 
+from ml_engine.llm_reviewer import generate_code_review
+from .github_api import get_installation_access_token, get_file_content, post_github_comment
+
 logger = logging.getLogger(__name__)
 
 
@@ -138,9 +141,20 @@ def process_github_webhook(self, event_type, payload):
                         
                         # Ask the ML Engine for a grade
                         ai_score = get_maintainability_score(func_count, class_count, loop_count, comp_score)
-                        
+
                         logger.info(f"AST Metrics: {metrics} | AI Maintainability Score: {ai_score}/100")
-                        
+
+                        # NEW: Tier 2 Generative AI Review
+                        # If the code smells (let's say under 90 for testing purposes), trigger the LLM
+                        if ai_score < 90.0:
+                            logger.info(f"Score below threshold. Triggering LLM Code Review for {filename}...")
+                            review_markdown = generate_code_review(filename, code, metrics, ai_score)
+
+                            if review_markdown:
+                                # Add a nice header to the bot's comment
+                                final_comment = f"🤖 **AI Code Reviewer (HelperAI)**\n\n{review_markdown}"
+                                post_github_comment(repo.full_name, commit_sha, access_token, final_comment)
+
                         # Save everything permanently to the Database
                         FileChange.objects.filter(
                             commit__commit_id=commit_sha, 

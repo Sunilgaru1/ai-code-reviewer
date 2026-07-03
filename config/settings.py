@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -131,3 +132,5 @@ CELERY_TASK_SERIALIZER = "json"
 GITHUB_WEBHOOK_SECRET = "a1b2c3d4e5f607890123456789abcdef12345678"
 
 GITHUB_APP_ID = "4192885"
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
