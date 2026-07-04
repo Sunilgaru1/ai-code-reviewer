@@ -1,22 +1,28 @@
-import google.generativeai as genai
+from google import genai
 from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-if hasattr(settings, 'GEMINI_API_KEY') and settings.GEMINI_API_KEY:
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-else:
-    logger.warning("GEMINI_API_KEY is not configured in settings.")
+# Initialize the new GenAI client
+try:
+    if getattr(settings, 'GEMINI_API_KEY', None):
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    else:
+        logger.warning("GEMINI_API_KEY is not configured in settings. AI review will fail.")
+        client = None
+except Exception as e:
+    logger.error(f"Failed to initialize GenAI client: {e}")
+    client = None
 
 def generate_code_review(filename, code_content, metrics, score):
     """
-    Sends complex or messy code to Gemini to generate actionable refactoring tips and Mermaid diagrams.
+    Sends complex or messy code to Gemini using the modern google-genai SDK.
     """
+    if not client:
+        return None
+
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        # We upgraded the prompt using the senior developer's Mermaid trick!
         prompt = f"""
         You are an elite Staff Software Engineer and automated code reviewer.
         Analyze the following Python file and provide a concise, high-impact review.
@@ -48,7 +54,11 @@ def generate_code_review(filename, code_content, metrics, score):
         - Make it a flowchart (graph TD).
         """
         
-        response = model.generate_content(prompt)
+        # New syntax for the google-genai SDK
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
         return response.text
         
     except Exception as e:
