@@ -88,7 +88,7 @@ def post_github_comment(repo_full_name, commit_sha, access_token, comment_body):
     """
     Step 4: Uses the VIP Wristband to post our AI review directly as a comment on the GitHub commit.
     """
-    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){repo_full_name}/commits/{commit_sha}/comments"
+    url = f"https://api.github.com/repos/{repo_full_name}/commits/{commit_sha}/comments"
     
     headers = {
         "Authorization": f"Bearer {access_token}",
