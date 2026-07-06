@@ -1,13 +1,10 @@
 import logging
-
 from celery import shared_task
 from django.db import transaction
-
 from .models import Repository, WebhookEvent, Commit, FileChange
 from .github_api import get_installation_access_token, get_file_content
 from .analyzer import analyze_python_code
 from ml_engine.services import get_maintainability_score
-
 from ml_engine.llm_reviewer import generate_code_review
 from .github_api import get_installation_access_token, get_file_content, post_github_comment
 
@@ -152,7 +149,7 @@ def process_github_webhook(self, event_type, payload):
 
                             if review_markdown:
                                 # Add a nice header to the bot's comment
-                                final_comment = f"🤖 **AI Code Reviewer (HelperAI)**\n\n{review_markdown}"
+                                final_comment = f"🤖 **AI Code Reviewer Boat**\n\n{review_markdown}"
                                 post_github_comment(repo.full_name, commit_sha, access_token, final_comment)
 
                         # Save everything permanently to the Database
