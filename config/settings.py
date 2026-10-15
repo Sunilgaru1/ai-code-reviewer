@@ -11,23 +11,26 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+import secrets
 from dotenv import load_dotenv
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-o9e1&jj@eoxdeah(nngx*@*nf_2%um+ilowp3kogf180!1l0#0'
+SECRET_KEY = os.getenv("SECRET_KEY") or f"django-insecure-{secrets.token_urlsafe(64)}"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() in {"1", "true", "yes", "on"}
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
 
 
 # Application definition
@@ -72,24 +75,43 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ai_reviewer_db',
-        'USER': 'myuser',
-        'PASSWORD': 'mypassword',
-        'HOST': 'db', # This matches the service name in docker-compose.yml!
-        'PORT': '3306',
-    }
-}
+DATABASE_URL = os.getenv('DATABASE_URL')
 
+if DATABASE_URL:
+    # 1. Strip the unsupported mysqlclient keyword so PyMySQL doesn't crash
+    clean_url = DATABASE_URL.replace("?ssl-mode=REQUIRED", "")
+    
+    db_config = dj_database_url.parse(
+        clean_url,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+    
+    # 2. Explicitly tell PyMySQL to use an SSL connection (required by Aiven)
+    db_config.setdefault('OPTIONS', {})
+    db_config['OPTIONS']['ssl'] = {}
+    
+    DATABASES = {
+        'default': db_config
+    }
+else:
+    # If there is no URL, fall back to local SQLite to prevent crashes
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 # Update your Celery settings to point to the Docker Redis container:
-CELERY_BROKER_URL = "redis://redis:6379/0"
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
+
+SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() in {'1', 'true', 'yes', 'on'}
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() in {'1', 'true', 'yes', 'on'}
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False').lower() in {'1', 'true', 'yes', 'on'}
 
 
 # Password validation
@@ -131,11 +153,8 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 
 
-GITHUB_WEBHOOK_SECRET = "a1b2c3d4e5f607890123456789abcdef12345678"
+GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "change-me-in-production")
 
-GITHUB_APP_ID = "4192885"
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv()
+GITHUB_APP_ID = os.getenv("GITHUB_APP_ID", "")
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

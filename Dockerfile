@@ -16,3 +16,6 @@ COPY requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . /app/
+
+RUN sed -i 's/\r$//' start.sh && chmod +x start.sh
+CMD ["./start.sh"]

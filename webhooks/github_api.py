@@ -8,19 +8,27 @@ import base64
 
 logger = logging.getLogger(__name__)
 
+def load_private_key():
+    private_key = os.getenv("GITHUB_PRIVATE_KEY")
+    if private_key:
+        return private_key
+
+    key_path = os.getenv("GITHUB_PRIVATE_KEY_PATH", str(settings.BASE_DIR / 'github_private_key.pem'))
+
+    try:
+        with open(key_path, 'r') as key_file:
+            return key_file.read()
+    except FileNotFoundError:
+        logger.error(f"Could not find private key at exactly: {key_path}")
+        return None
+
+
 def generate_jwt():
     """
     Step 1: Creates the temporary 'ID Card' using our Private Key.
     """
-    # We build the exact GPS path to the file using Django's BASE_DIR
-    key_path = settings.BASE_DIR / 'github_private_key.pem'
-    
-    try:
-        # We use the exact path to open it
-        with open(key_path, 'r') as key_file:
-            private_key = key_file.read()
-    except FileNotFoundError:
-        logger.error(f"Could not find private key at exactly: {key_path}")
+    private_key = load_private_key()
+    if not private_key:
         return None
 
     payload = {
