@@ -3,8 +3,8 @@
 # Apply database migrations first
 python manage.py migrate
 
-# Start the Celery worker in the background (using the & symbol)
-celery -A config worker --loglevel=info &
+# Start Celery with the solo pool to use only one background process
+celery -A config worker --loglevel=info --pool=solo &
 
-# Start the Django web server using Gunicorn (best for production)
-gunicorn config.wsgi:application --bind 0.0.0.0:8000
+# Start Gunicorn with exactly 1 worker to strictly limit web server memory usage
+gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 1
