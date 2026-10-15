@@ -9,8 +9,6 @@
 
 An automated, asynchronous GitHub App that intercepts push and Pull Request webhooks to provide real-time, AI-driven code reviews using the Google Gemini LLM. 
 
-![Project Demo](https://via.placeholder.com/800x400.png?text=Replace+this+image+with+a+GIF+of+your+bot+commenting+on+GitHub)
-*(**Note:** Watch the 2-minute video demonstration of the bot in action [here](#).)*
 
 ## 🏗️ System Architecture & Engineering Decisions
 
